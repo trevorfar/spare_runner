@@ -35,7 +35,7 @@ jobs:
 4) List the jobs and the runners that ran them. 2 options:
 	1) Got AI to make a python script ( easiest)
 		1.1) Copy the runid from github:
-			https://github.com/trevorfar/Namespace_TEST/actions/runs/<RUN_ID>
+			https://github.com/trevorfar/spare_runner/actions/runs/<RUN_ID>
 		1.2) python spare_check.py <RUN_ID>
 			run <RUN_ID>: 3 jobs, 6 runners, last job started 16:20:32
 			  16:20:10  ftibs2qmi6oag  life=    76s  ran pinned (2)
