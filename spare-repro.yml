@@ -1,0 +1,12 @@
+name: spare-repro
+on:
+  workflow_dispatch:
+
+jobs:
+  pinned:
+    strategy:
+      matrix:
+        n: [1, 2, 3]
+    runs-on: namespace-profile-test;github.run-id=${{ github.run_id }}
+    steps:
+      - run: sleep 30
