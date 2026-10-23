@@ -1,0 +1,59 @@
+name: spare-waterfall
+on:
+  workflow_dispatch:
+  push:
+    branches: [spare-runner-waterfall]
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      baseline: ${{ steps.snapshot.outputs.baseline }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: snapshot
+        env:
+          RUNNER_ADMIN_TOKEN: ${{ secrets.RUNNER_ADMIN_TOKEN }}
+        run: python3 spare_waterfall.py snapshot
+
+  pinned:
+    needs: prepare
+    name: seed (${{ matrix.n }})
+    strategy:
+      fail-fast: false
+      matrix:
+        n: [1, 2, 3]
+    runs-on: namespace-profile-test;github.run-id=${{ github.run_id }}
+    timeout-minutes: 5
+    steps:
+      - name: Keep the three original runners busy during discovery
+        run: |
+          hostname
+          sleep 180
+
+  discover:
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    outputs:
+      targets: ${{ steps.spares.outputs.targets }}
+      count: ${{ steps.spares.outputs.count }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: spares
+        env:
+          RUNNER_ADMIN_TOKEN: ${{ secrets.RUNNER_ADMIN_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          BASELINE: ${{ needs.prepare.outputs.baseline }}
+        run: python3 spare_waterfall.py discover
+
+  consume:
+    needs: discover
+    if: needs.discover.outputs.count != '0'
+    uses: ./.github/workflows/spare-consume.yml
+    with:
+      targets: ${{ needs.discover.outputs.targets }}

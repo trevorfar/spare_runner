@@ -1,0 +1,33 @@
+name: spare-consume
+on:
+  workflow_call:
+    inputs:
+      targets:
+        description: JSON array of exact runner identities and unique labels
+        required: true
+        type: string
+
+permissions: {}
+
+jobs:
+  success:
+    name: spare ${{ matrix.target.id }}
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ${{ fromJSON(inputs.targets) }}
+    # Only this existing runner receives this label. Do not include a Namespace
+    # profile here: that could request another freshly provisioned runner.
+    runs-on: ${{ matrix.target.label }}
+    timeout-minutes: 2
+    steps:
+      - name: Verify the selected runner and print SUCCESS
+        env:
+          EXPECTED_NAME: ${{ matrix.target.name }}
+          ACTUAL_NAME: ${{ runner.name }}
+          RUNNER_ID: ${{ matrix.target.id }}
+        run: |
+          test "$ACTUAL_NAME" = "$EXPECTED_NAME"
+          printf 'GitHub runner ID: %s\nRunner name: %s\n' "$RUNNER_ID" "$ACTUAL_NAME"
+          printf 'Namespace instance ID: %s\n' "$(hostname)"
+          echo SUCCESS
